@@ -1,8 +1,8 @@
-# Omarchy Workspace Preview
+# Omarchy Workspace Overview
 
 Preview your Hyprland workspaces while switching.
 
-![Workspace Preview](preview.png)
+![Workspace Overview](preview.png)
 
 ## Features
 
@@ -24,14 +24,14 @@ There are no external dependencies, privileged operations, background services, 
 ## Install
 
 ```sh
-omarchy plugin add https://github.com/pablopunk/omarchy-workspace-preview.git --enable
+omarchy plugin add https://github.com/pablopunk/omarchy-workspace-overview.git --enable
 ```
 
 The plugin starts automatically and appears briefly after the focused Hyprland workspace changes.
 
 ## Configure
 
-The defaults are defined near the top of `WorkspacePreview.qml`:
+The defaults are defined near the top of `WorkspaceOverview.qml`:
 
 - `duration`: visibility in milliseconds, default `1300`
 - `cardWidth`: preferred workspace card width
@@ -41,7 +41,7 @@ The defaults are defined near the top of `WorkspacePreview.qml`:
 User plugin files live at:
 
 ```text
-~/.config/omarchy/plugins/pol.workspace-preview/
+~/.config/omarchy/plugins/pol.workspace-overview/
 ```
 
 Restart the shell after changing plugin code:
@@ -53,16 +53,16 @@ omarchy restart shell
 ## Commands
 
 ```sh
-omarchy-shell workspace-preview open
-omarchy-shell workspace-preview close
-omarchy-shell workspace-preview toggle
-omarchy-shell workspace-preview state
+omarchy-shell workspace-overview open
+omarchy-shell workspace-overview close
+omarchy-shell workspace-overview toggle
+omarchy-shell workspace-overview state
 ```
 
 ## Remove
 
 ```sh
-omarchy plugin remove pol.workspace-preview
+omarchy plugin remove pol.workspace-overview
 ```
 
 ## Performance

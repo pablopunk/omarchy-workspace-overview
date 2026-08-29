@@ -154,7 +154,7 @@ Item {
   }
 
   IpcHandler {
-    target: "workspace-preview"
+    target: "workspace-overview"
     function open(): string { root.show(); return "ok" }
     function close(): string { root.hide(); return "ok" }
     function toggle(): string { root.toggle(); return "ok" }
@@ -191,7 +191,7 @@ Item {
     visible: root.opened || strip.opacity > 0
     anchors { top: true; bottom: true; left: true; right: true }
     color: "transparent"
-    WlrLayershell.namespace: "omarchy-workspace-preview"
+    WlrLayershell.namespace: "omarchy-workspace-overview"
     WlrLayershell.layer: WlrLayer.Overlay
     WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
     exclusionMode: ExclusionMode.Ignore

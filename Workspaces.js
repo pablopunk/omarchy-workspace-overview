@@ -1,4 +1,4 @@
-// Workspace model builder for pol.workspace-preview.
+// Workspace model builder for pol.workspace-overview.
 //
 // Converts Quickshell's live Hyprland object model into plain JS objects so a
 // Repeater can render one card per workspace. Rebuilt on demand; nothing here

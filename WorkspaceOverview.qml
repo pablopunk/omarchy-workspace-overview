@@ -11,8 +11,9 @@ import "Workspaces.js" as Workspaces
 // Workspace switcher overlay.
 //
 // A bottom-centered strip of miniature monitor previews, one per Hyprland
-// workspace. Appears whenever the focused workspace changes and hides after a
-// short delay. The focused workspace is highlighted with the theme accent.
+// workspace. Appears whenever the focused workspace changes or the pointer
+// touches the bottom edge of the focused monitor, and hides after a short
+// delay. The focused workspace is highlighted with the theme accent.
 //
 // Window thumbnails are single-frame toplevel exports. Capture sources exist
 // only while the overlay is open, keeping compositor and battery cost brief.
@@ -30,6 +31,8 @@ Item {
   property int cardGap: Style.space(10)
   property int outerPad: Style.space(14)
   property int panelMargin: Style.space(44)
+  property bool edgeEnabled: true
+  property int edgeHeight: Style.space(6)
 
   // Shrink cards when the full row would not fit the focused monitor.
   readonly property int effectiveCardWidth: {
@@ -241,6 +244,28 @@ Item {
             captureEnabled: root.opened
           }
         }
+      }
+    }
+  }
+
+  // Invisible bottom hot edge. Touching the bottom of the focused monitor
+  // shows the overview the same way a workspace switch does.
+  PanelWindow {
+    id: edge
+    screen: root.activeScreen
+    visible: root.edgeEnabled
+    anchors { bottom: true; left: true; right: true }
+    implicitHeight: root.edgeHeight
+    color: "transparent"
+    WlrLayershell.namespace: "omarchy-workspace-overview-edge"
+    WlrLayershell.layer: WlrLayer.Overlay
+    WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
+    exclusionMode: ExclusionMode.Ignore
+
+    Item {
+      anchors.fill: parent
+      HoverHandler {
+        onHoveredChanged: if (hovered && root.ready) root.show()
       }
     }
   }

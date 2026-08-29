@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "id": "pol.workspace-preview",
+  "name": "Workspace Preview",
+  "version": "1.0.0",
+  "author": "Pablo P Varela",
+  "license": "MIT",
+  "description": "Theme-native workspace switcher with efficient window previews for occupied Hyprland workspaces",
+  "kinds": [
+    "panel"
+  ],
+  "keepLoaded": true,
+  "entryPoints": {
+    "panel": "WorkspacePreview.qml"
+  }
+}

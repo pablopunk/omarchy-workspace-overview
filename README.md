@@ -1,6 +1,6 @@
 # Omarchy Workspace Preview
 
-A native Omarchy Quickshell overlay that previews occupied Hyprland workspaces whenever you switch workspaces.
+Preview your Hyprland workspaces on switch.
 
 ![Workspace Preview](preview.png)
 

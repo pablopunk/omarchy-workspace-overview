@@ -5,7 +5,7 @@
   "version": "1.0.0",
   "author": "Pablo P Varela",
   "license": "MIT",
-  "description": "Theme-native workspace switcher with efficient window previews for occupied Hyprland workspaces",
+  "description": "Preview your Hyprland workspaces on switch",
   "kinds": [
     "panel"
   ],

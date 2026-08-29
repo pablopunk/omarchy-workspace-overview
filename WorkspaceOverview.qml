@@ -43,11 +43,17 @@ Item {
     return Math.max(64, Math.min(root.cardWidth, maxW))
   }
 
-  readonly property int hideAnim: 150
+  readonly property int hideAnim: 100
   readonly property int cornerRadius: Style.cornerRadius
   property var workspaces: []
   property string wallpaperPath: ""
+  readonly property string wallpaperUrl: root.wallpaperPath.length > 0 ? Util.fileUrl(root.wallpaperPath) : ""
   property bool ready: false
+  property bool modelDirty: true
+  property int captureToken: 0
+  property bool geometryRefreshPending: false
+  property bool geometryRefreshInFlight: false
+  property real lastWallpaperCheck: 0
 
   Timer {
     id: readyTimer
@@ -57,7 +63,7 @@ Item {
 
   Component.onCompleted: {
     readyTimer.start()
-    wallpaperProc.running = true
+    refreshWallpaper()
   }
 
   // Show / hide / toggle are the shell panel contract.
@@ -65,16 +71,56 @@ Item {
   function close() { hide() }
   function toggle() { opened ? hide() : show() }
 
-  function show() {
+  // The wallpaper changes rarely. Avoid forking readlink on every workspace
+  // switch while still noticing a changed background within a few seconds.
+  function refreshWallpaper() {
+    var now = Date.now()
+    if (wallpaperProc.running || now - root.lastWallpaperCheck < 5000) return
+    root.lastWallpaperCheck = now
     wallpaperProc.running = true
+  }
+
+  function refreshModel() {
+    root.workspaces = Workspaces.buildWorkspaces()
+    root.modelDirty = false
+  }
+
+  // Refresh the expensive IPC geometry request once per topology burst. The
+  // first model is useful immediately; the delayed rebuild picks up fresh
+  // positions/sizes without delaying the initial overlay.
+  function requestGeometryRefresh() {
+    root.geometryRefreshPending = true
+    if (root.geometryRefreshInFlight) return
+    root.geometryRefreshInFlight = true
+    Hyprland.refreshToplevels()
+    geometryRefreshTimer.restart()
+  }
+
+  function restartHideTimer() {
+    if (stripHover.hovered) hideTimer.stop()
+    else hideTimer.restart()
+  }
+
+  function show() {
+    refreshWallpaper()
+    var wasOpen = root.opened
     ready = true
     opened = true
-    Hyprland.refreshToplevels()
-    modelRefreshTimer.restart()
+    if (root.modelDirty || root.workspaces.length === 0) {
+      // Focus changes do not alter workspace membership, so reuse the card
+      // tree for the common path. Topology events mark this model dirty.
+      refreshModel()
+    } else {
+      // A still capture can be requested again without destroying the card
+      // and ScreencopyView objects.
+      if (wasOpen) root.captureToken += 1
+    }
+    restartHideTimer()
   }
 
   function hide() {
     hideTimer.stop()
+    settleTimer.stop()
     opened = false
   }
 
@@ -101,6 +147,11 @@ Item {
     return screens.length > 0 ? screens[0] : null
   }
 
+  readonly property var focusedWorkspaceId: {
+    var ws = Hyprland.focusedWorkspace
+    return ws ? ws.id : null
+  }
+
   // Bar-aware bottom margin so the strip never sits under a bottom bar.
   readonly property real cardBottomMargin: {
     var bar = shell ? shell.bar : null
@@ -113,42 +164,47 @@ Item {
   Timer {
     id: hideTimer
     interval: root.duration
-    onTriggered: root.opened = false
+    onTriggered: root.hide()
   }
 
-  // refreshToplevels() updates lastIpcObject asynchronously. Geometry is not
-  // usable until that reply lands; building immediately would put every window
-  // into the tiny unknown-geometry fallback.
   Timer {
-    id: modelRefreshTimer
+    id: geometryRefreshTimer
     interval: 100
     onTriggered: {
-      root.workspaces = Workspaces.buildWorkspaces()
-      hideTimer.restart()
+      root.geometryRefreshInFlight = false
+      if (!root.geometryRefreshPending) return
+      root.geometryRefreshPending = false
+      root.refreshModel()
+      if (root.opened) root.restartHideTimer()
     }
   }
 
-  // Settle rapid workspace event bursts (Hyprland emits several events per
-  // switch) into one refresh.
+  // Settle rapid window-topology events into one model rebuild.
   Timer {
     id: settleTimer
-    interval: 120
+    interval: 40
     onTriggered: root.show()
   }
 
   Connections {
     target: Hyprland
 
+    function onFocusedWorkspaceChanged() {
+      if (root.ready) root.show()
+    }
+
     function onRawEvent(event) {
       var name = String(event && event.name ? event.name : "")
       // Ignore the initial workspace/focus events Hyprland emits while the
       // shell is coming up, so the strip never flashes at login.
       if (!root.ready) return
-      if (name === "workspace" || name === "workspacev2") {
-        settleTimer.restart()
-      } else if (name === "movewindow" || name === "moveworkspace" || name === "openwindow" || name === "closewindow") {
-        if (root.opened) settleTimer.restart()
-      }
+      var geometryEvent = ["movewindow", "moveworkspace", "openwindow", "closewindow", "changefloatingmode", "fullscreen", "pin", "minimize"].indexOf(name) !== -1
+      var modelEvent = geometryEvent || name === "renameworkspace" || name === "urgent"
+      if (!modelEvent) return
+
+      root.modelDirty = true
+      if (geometryEvent) root.requestGeometryRefresh()
+      else if (root.opened) settleTimer.restart()
     }
   }
 
@@ -178,7 +234,7 @@ Item {
         ws.push({
           id: w.id,
           label: w.label,
-          focused: w.focused,
+          focused: root.focusedWorkspaceId !== null && Number(w.id) === Number(root.focusedWorkspaceId),
           windows: w.windowCount,
           mw: w.monitorWidth,
           mh: w.monitorHeight,
@@ -228,6 +284,7 @@ Item {
       // Keep the overview open while the pointer is over it, so a click can
       // land; the auto-hide countdown resumes once the pointer leaves.
       HoverHandler {
+        id: stripHover
         onHoveredChanged: {
           if (hovered) hideTimer.stop()
           else if (root.opened) hideTimer.restart()
@@ -257,10 +314,13 @@ Item {
             width: root.effectiveCardWidth
 
             ws: modelData
-            wallpaper: root.wallpaperPath.length > 0 ? Util.fileUrl(root.wallpaperPath) : ""
+            wallpaper: root.wallpaperUrl
             // Cards take one still frame, then captureSource becomes null when
             // the overlay closes, releasing compositor and texture resources.
             captureEnabled: root.opened
+            captureToken: root.captureToken
+            focused: root.focusedWorkspaceId !== null
+              && Number(root.focusedWorkspaceId) === Number(modelData.id)
             onActivate: function(ws) { root.focusWorkspace(ws) }
           }
         }

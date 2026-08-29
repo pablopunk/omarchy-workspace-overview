@@ -37,9 +37,8 @@ function titleOf(toplevel) {
   return toplevel && typeof toplevel.title === "string" ? toplevel.title : ""
 }
 
-function appIdOf(toplevel) {
-  var t = toplevel && toplevel.wayland ? toplevel.wayland : null
-  if (t && typeof t.appId === "string" && t.appId.length > 0) return t.appId
+function appIdOf(wayland) {
+  if (wayland && typeof wayland.appId === "string" && wayland.appId.length > 0) return wayland.appId
   return ""
 }
 
@@ -71,17 +70,18 @@ function buildWorkspaces() {
       var tl = toplevels[j]
       if (!tl) continue
       var g = windowGeometry(tl, monitor)
+      var wayland = tl.wayland ? tl.wayland : null
       windows.push({
         title: titleOf(tl),
-        appId: appIdOf(tl),
-        wayland: tl.wayland ? tl.wayland : null,
+        appId: appIdOf(wayland),
+        wayland: wayland,
         x: g.x, y: g.y, w: g.w, h: g.h,
         noGeo: !g.known,
         // Card-space cascade for windows whose IPC geometry never arrived,
         // so several unknown tiles do not stack on the same pixel.
         fx: 4 + (fallbackN % 4) * 14,
         fy: 4 + Math.floor(fallbackN / 4) * 14,
-        fullscreen: !!(tl.wayland && tl.wayland.fullscreen),
+        fullscreen: !!(wayland && wayland.fullscreen),
         activated: tl.activated === true,
         urgent: tl.urgent === true
       })

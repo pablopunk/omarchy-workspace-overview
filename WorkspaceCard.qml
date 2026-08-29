@@ -18,6 +18,8 @@ Item {
   required property var ws
   property string wallpaper: ""
   property bool captureEnabled: false
+  property bool focused: false
+  property int captureToken: 0
 
   signal activate(var ws)
 
@@ -32,8 +34,8 @@ Item {
 
   readonly property color focusedBorder: Color.accent
   readonly property color idleBorder: Util.alpha(Color.popups.border, 0.4)
-  readonly property color borderColor: ws && ws.focused ? focusedBorder : idleBorder
-  readonly property int borderWidth: ws && ws.focused ? Math.max(2, Style.space(2)) : 1
+  readonly property color borderColor: root.focused ? focusedBorder : idleBorder
+  readonly property int borderWidth: root.focused ? Math.max(2, Style.space(2)) : 1
 
   readonly property string label: ws ? String(ws.label || ws.id) : ""
 
@@ -84,8 +86,26 @@ Item {
         model: root.ws ? root.ws.windows : []
 
         Item {
+          id: windowTile
           required property var modelData
           readonly property var win: modelData
+          property bool captureQueued: false
+          property int captureToken: root.captureToken
+          property bool componentReady: false
+
+          Component.onCompleted: componentReady = true
+
+          function requestCapture() {
+            if (captureQueued) return
+            if (!root.captureEnabled || !capture.hasContent) return
+            var source = capture.captureSource
+            if (!source) return
+            captureQueued = true
+            Qt.callLater(function() {
+              captureQueued = false
+              if (root.captureEnabled && capture.captureSource === source) capture.captureFrame()
+            })
+          }
 
           // Scaled monitor geometry when available; unknown geometry falls
           // back to a small cascade so several such tiles don't stack.
@@ -111,11 +131,9 @@ Item {
             constraintSize: Qt.size(Math.max(1, width), Math.max(1, height))
             paintCursor: false
             visible: capture.hasContent
-
-            onCaptureSourceChanged: {
-              if (captureSource) Qt.callLater(function() { capture.captureFrame() })
-            }
           }
+
+          onCaptureTokenChanged: if (componentReady && capture.captureSource && capture.hasContent) requestCapture()
 
           // Title on the placeholder — the only hint non-capturable windows
           // get. Hidden while a capture is actually rendering.
@@ -147,8 +165,8 @@ Item {
         text: root.label
         font.family: Style.font.family
         font.pixelSize: Style.font.caption
-        font.bold: root.ws && root.ws.focused
-        color: root.ws && root.ws.focused ? Color.accent : Util.alpha(Color.popups.text, 0.7)
+        font.bold: root.focused
+        color: root.focused ? Color.accent : Util.alpha(Color.popups.text, 0.7)
       }
 
       Rectangle {

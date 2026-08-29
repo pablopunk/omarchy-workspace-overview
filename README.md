@@ -1,8 +1,8 @@
-# Omarchy Workspace Overview
+# Omarchy Workspace Peek
 
-Preview you hyprland workspaces while switching. Works with your mouse too.
+Preview your Hyprland workspaces while switching. Works with your mouse too.
 
-![Workspace Overview](preview.png)
+![Workspace Peek](preview.png)
 
 ## Controls
 

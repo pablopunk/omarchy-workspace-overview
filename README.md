@@ -1,27 +1,21 @@
 # Omarchy Workspace Overview
 
-Preview your Hyprland workspaces while switching.
+Preview occupied Hyprland workspaces while switching.
 
 ![Workspace Overview](preview.png)
 
+## Controls
+
+- Switching workspaces opens the overview automatically.
+- Mouse: touch the bottom edge of the focused monitor to open it, then click a workspace card to switch there.
+- The overview stays open while the pointer is over the cards and hides after it leaves.
+
 ## Features
 
-- Shows only workspaces containing windows
-- Recreates tiled and floating window layouts from Hyprland geometry
-- Highlights the focused workspace using the active Omarchy theme
-- Uses the current wallpaper, colors, typography, spacing, and corner radius
-- Follows the focused monitor and avoids a bottom-positioned Omarchy bar
-- Opens on workspace switch or by touching the bottom edge of the focused monitor
-- Click a workspace to switch to it; the overview stays open while your pointer is over it
-- Captures one still frame per window, then releases all capture sources when hidden
-- Updates focus immediately, coalesces topology refreshes, and performs no capture work while idle
-
-## Requirements
-
-- Omarchy Quattro
-- Hyprland and Quickshell as provided by Omarchy
-
-There are no external dependencies, privileged operations, background services, or network requests.
+- Recreates tiled and floating layouts from Hyprland geometry.
+- Shows current wallpaper and theme styling, with the focused workspace highlighted.
+- Follows the focused monitor and avoids a bottom-positioned bar.
+- Captures one still thumbnail per window; no live capture or idle GPU work.
 
 ## Install
 
@@ -29,26 +23,14 @@ There are no external dependencies, privileged operations, background services, 
 omarchy plugin add https://github.com/pablopunk/omarchy-workspace-overview.git --enable
 ```
 
-The plugin starts automatically and appears briefly after the focused Hyprland workspace changes, or when the pointer touches the bottom edge of the focused monitor.
+Requires Omarchy Quattro with Hyprland and Quickshell. There are no external dependencies.
 
 ## Configure
 
-The defaults are defined near the top of `WorkspaceOverview.qml`:
+Edit `~/.config/omarchy/plugins/pablopunk.workspace-overview/WorkspaceOverview.qml`.
+Available settings include `duration` (1300 ms), `cardWidth`, `cardGap`, `panelMargin`, `edgeEnabled` (true), and `edgeHeight`.
 
-- `duration`: visibility in milliseconds, default `1300`
-- `cardWidth`: preferred workspace card width
-- `cardGap`: spacing between workspace cards
-- `panelMargin`: distance from the bottom screen edge
-- `edgeEnabled`: whether the bottom hover trigger is active, default `true`
-- `edgeHeight`: height of the invisible bottom hover strip
-
-User plugin files live at:
-
-```text
-~/.config/omarchy/plugins/pablopunk.workspace-overview/
-```
-
-Restart the shell after changing plugin code:
+Restart after code changes:
 
 ```sh
 omarchy restart shell
@@ -68,10 +50,6 @@ omarchy-shell workspace-overview state
 ```sh
 omarchy plugin remove pablopunk.workspace-overview
 ```
-
-## Performance
-
-The plugin never runs live video captures. The focus and hover paths reuse the existing card tree and request one thumbnail-sized frame for each visible window. Topology changes refresh geometry in the background. Capture sources are cleared as soon as the overlay closes, leaving no ongoing compositor or GPU work.
 
 ## License
 

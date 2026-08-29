@@ -1,6 +1,6 @@
 # Omarchy Workspace Overview
 
-Preview occupied Hyprland workspaces while switching.
+Preview you hyprland workspaces while switching. Works with your mouse too.
 
 ![Workspace Overview](preview.png)
 

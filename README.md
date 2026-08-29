@@ -1,6 +1,6 @@
 # Omarchy Workspace Preview
 
-Preview your Hyprland workspaces on switch.
+Preview your Hyprland workspaces while switching.
 
 ![Workspace Preview](preview.png)
 

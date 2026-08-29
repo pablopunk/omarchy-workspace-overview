@@ -5,7 +5,7 @@
   "version": "1.0.0",
   "author": "Pablo P Varela",
   "license": "MIT",
-  "description": "Preview your Hyprland workspaces on switch",
+  "description": "Preview your Hyprland workspaces while switching",
   "kinds": [
     "panel"
   ],

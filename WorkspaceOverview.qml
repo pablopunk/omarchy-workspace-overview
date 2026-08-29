@@ -83,6 +83,7 @@ Item {
   function refreshModel() {
     root.workspaces = Workspaces.buildWorkspaces()
     root.modelDirty = false
+    if (root.opened && root.workspaces.length === 0) root.hide()
   }
 
   // Refresh the expensive IPC geometry request once per topology burst. The
@@ -104,17 +105,19 @@ Item {
   function show() {
     refreshWallpaper()
     var wasOpen = root.opened
+    var rebuilt = root.modelDirty
     ready = true
-    opened = true
-    if (root.modelDirty || root.workspaces.length === 0) {
+    if (rebuilt) {
       // Focus changes do not alter workspace membership, so reuse the card
       // tree for the common path. Topology events mark this model dirty.
       refreshModel()
-    } else {
-      // A still capture can be requested again without destroying the card
-      // and ScreencopyView objects.
-      if (wasOpen) root.captureToken += 1
     }
+    if (root.workspaces.length === 0) {
+      if (root.opened) root.hide()
+      return
+    }
+    if (!rebuilt && wasOpen) root.captureToken += 1
+    opened = true
     restartHideTimer()
   }
 
@@ -175,6 +178,7 @@ Item {
       if (!root.geometryRefreshPending) return
       root.geometryRefreshPending = false
       root.refreshModel()
+      if (root.workspaces.length === 0) return
       if (root.opened) root.restartHideTimer()
     }
   }

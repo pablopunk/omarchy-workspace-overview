@@ -19,6 +19,8 @@ Item {
   property string wallpaper: ""
   property bool captureEnabled: false
 
+  signal activate(var ws)
+
   readonly property real previewHeight: Math.round(root.width * 9 / 16)
   readonly property real labelHeight: Math.max(Style.space(12), Style.font.caption + Style.space(4))
 
@@ -156,6 +158,14 @@ Item {
         radius: width / 2
         color: Color.urgent
       }
+    }
+
+    // Clicking a card switches to that workspace.
+    MouseArea {
+      anchors.fill: parent
+      hoverEnabled: true
+      cursorShape: Qt.PointingHandCursor
+      onClicked: root.activate(root.ws)
     }
   }
 }

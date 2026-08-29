@@ -12,6 +12,7 @@ Preview your Hyprland workspaces while switching.
 - Uses the current wallpaper, colors, typography, spacing, and corner radius
 - Follows the focused monitor and avoids a bottom-positioned Omarchy bar
 - Opens on workspace switch or by touching the bottom edge of the focused monitor
+- Click a workspace to switch to it; the overview stays open while your pointer is over it
 - Captures one still frame per window, then releases all capture sources when hidden
 - Debounces rapid workspace changes and performs no capture work while idle
 

@@ -78,6 +78,15 @@ Item {
     opened = false
   }
 
+  // Switch to the workspace behind a clicked card. Omarchy runs Hyprland in
+  // Lua mode, so workspace focus goes through the Lua dispatcher.
+  function focusWorkspace(ws) {
+    if (!ws) return
+    var target = (ws.name && String(ws.name).length > 0) ? String(ws.name) : String(ws.id)
+    var expr = 'hl.dsp.focus({ workspace = "' + target + '" })'
+    Util.execDetached('hyprctl dispatch ' + Util.shellQuote(expr))
+  }
+
   // Reactive screen resolution: QML tracks focusedMonitor.name and
   // Quickshell.screens so this re-evaluates when either changes.
   readonly property var activeScreen: {
@@ -198,8 +207,9 @@ Item {
     WlrLayershell.layer: WlrLayer.Overlay
     WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
     exclusionMode: ExclusionMode.Ignore
-    // Visual-only surface: clicks pass straight through to the desktop.
-    mask: Region {}
+    // Only the strip receives input; clicks elsewhere pass through to the
+    // desktop, so a stray click dismisses the overview without swallowing it.
+    mask: Region { item: strip }
 
     BorderSurface {
       id: strip
@@ -214,6 +224,15 @@ Item {
       color: Util.alpha(Color.popups.background, 0.97)
       borderSpec: Border.surfaceSpec("popups", "border", Color.popups.border, Math.max(1, Style.space(2)))
       opacity: root.opened ? 1 : 0
+
+      // Keep the overview open while the pointer is over it, so a click can
+      // land; the auto-hide countdown resumes once the pointer leaves.
+      HoverHandler {
+        onHoveredChanged: {
+          if (hovered) hideTimer.stop()
+          else if (root.opened) hideTimer.restart()
+        }
+      }
 
       Behavior on opacity {
         NumberAnimation { duration: root.hideAnim; easing.type: Easing.OutCubic }
@@ -242,6 +261,7 @@ Item {
             // Cards take one still frame, then captureSource becomes null when
             // the overlay closes, releasing compositor and texture resources.
             captureEnabled: root.opened
+            onActivate: function(ws) { root.focusWorkspace(ws) }
           }
         }
       }

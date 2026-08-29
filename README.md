@@ -41,7 +41,7 @@ The defaults are defined near the top of `WorkspaceOverview.qml`:
 User plugin files live at:
 
 ```text
-~/.config/omarchy/plugins/pol.workspace-overview/
+~/.config/omarchy/plugins/pablopunk.workspace-overview/
 ```
 
 Restart the shell after changing plugin code:
@@ -62,7 +62,7 @@ omarchy-shell workspace-overview state
 ## Remove
 
 ```sh
-omarchy plugin remove pol.workspace-overview
+omarchy plugin remove pablopunk.workspace-overview
 ```
 
 ## Performance

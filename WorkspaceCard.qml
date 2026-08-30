@@ -33,9 +33,9 @@ Item {
   readonly property bool hasScale: scaleX > 0 && scaleY > 0
 
   readonly property color focusedBorder: Color.accent
-  readonly property color idleBorder: Util.alpha(Color.popups.border, 0.4)
+  readonly property color idleBorder: "transparent"
   readonly property color borderColor: root.focused ? focusedBorder : idleBorder
-  readonly property int borderWidth: root.focused ? Math.max(2, Style.space(2)) : 1
+  readonly property int borderWidth: Math.max(2, Style.space(2))
 
   readonly property string label: ws ? String(ws.label || ws.id) : ""
 

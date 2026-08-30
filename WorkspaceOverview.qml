@@ -29,7 +29,7 @@ Item {
   property int duration: 1300
   property int cardWidth: Style.space(112)
   property int cardGap: Style.space(10)
-  property int outerPad: Style.space(14)
+  property int outerPad: Style.space(10)
   property int panelMargin: Style.space(44)
   property bool edgeEnabled: true
   property int edgeHeight: Style.space(6)

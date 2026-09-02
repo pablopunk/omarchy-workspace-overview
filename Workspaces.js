@@ -4,6 +4,15 @@
 // Repeater can render one card per workspace. Rebuilt on demand; nothing here
 // is reactive — callers rebuild after Hyprland events settle.
 
+var MAX_WORKSPACES = 32
+var MAX_WINDOWS_PER_WORKSPACE = 64
+var MAX_NAME_LENGTH = 128
+var MAX_TITLE_LENGTH = 256
+
+function boundedString(value, maxLength) {
+  return typeof value === "string" ? value.slice(0, maxLength) : ""
+}
+
 function clamp(n, lo, hi) {
   var v = Number(n)
   if (!isFinite(v)) return lo
@@ -34,12 +43,11 @@ function windowGeometry(toplevel, monitor) {
 }
 
 function titleOf(toplevel) {
-  return toplevel && typeof toplevel.title === "string" ? toplevel.title : ""
+  return toplevel ? boundedString(toplevel.title, MAX_TITLE_LENGTH) : ""
 }
 
 function appIdOf(wayland) {
-  if (wayland && typeof wayland.appId === "string" && wayland.appId.length > 0) return wayland.appId
-  return ""
+  return wayland ? boundedString(wayland.appId, MAX_NAME_LENGTH) : ""
 }
 
 // One card per occupied workspace. Includes the focused flag, logical monitor
@@ -48,13 +56,14 @@ function appIdOf(wayland) {
 function buildWorkspaces() {
   var values = (typeof Hyprland !== "undefined" && Hyprland.workspaces) ? Hyprland.workspaces.values : []
   var out = []
-  for (var i = 0; i < values.length; i++) {
+  for (var i = 0; i < values.length && i < MAX_WORKSPACES; i++) {
     var ws = values[i]
     if (!ws) continue
 
     var id = Number(ws.id)
-    var name = String(ws.name || "")
-    var label = name.length > 0 ? name : String(ws.id)
+    if (!isFinite(id)) continue
+    var name = boundedString(ws.name, MAX_NAME_LENGTH)
+    var label = name.length > 0 ? name : String(id)
     var monitor = ws.monitor
     var monitorScale = monitor ? (Number(monitor.scale) || 1) : 1
     // Quickshell reports physical monitor dimensions, while Hyprland client
@@ -66,7 +75,7 @@ function buildWorkspaces() {
     var windows = []
     var toplevels = ws.toplevels && ws.toplevels.values ? ws.toplevels.values : []
     var fallbackN = 0
-    for (var j = 0; j < toplevels.length; j++) {
+    for (var j = 0; j < toplevels.length && j < MAX_WINDOWS_PER_WORKSPACE; j++) {
       var tl = toplevels[j]
       if (!tl) continue
       var g = windowGeometry(tl, monitor)
@@ -92,7 +101,7 @@ function buildWorkspaces() {
     if (windows.length === 0) continue
 
     out.push({
-      id: ws.id,
+      id: id,
       name: name,
       label: label,
       focused: ws.focused === true,

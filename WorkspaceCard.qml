@@ -142,6 +142,7 @@ Item {
             width: parent.width - 6
             visible: !capture.hasContent
             text: win.title.length > 0 ? win.title : String(win.appId || "window")
+            textFormat: Text.PlainText
             font.family: Style.font.family
             font.pixelSize: Math.max(6, Style.font.caption - 2)
             color: Util.alpha(Color.popups.text, 0.75)
@@ -163,6 +164,7 @@ Item {
 
       Text {
         text: root.label
+        textFormat: Text.PlainText
         font.family: Style.font.family
         font.pixelSize: Style.font.caption
         font.bold: root.focused

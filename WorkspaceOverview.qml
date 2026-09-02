@@ -132,7 +132,14 @@ Item {
   function focusWorkspace(ws) {
     if (!ws) return
     var target = (ws.name && String(ws.name).length > 0) ? String(ws.name) : String(ws.id)
-    var expr = 'hl.dsp.focus({ workspace = "' + target + '" })'
+    // Escape the inner Lua literal before quoting the outer shell argument.
+    var escaped = target.replace(/[\\"\x00-\x1f\x7f]/g, function(ch) {
+      if (ch === "\\") return "\\\\"
+      if (ch === '"') return '\\"'
+      var decimal = ch.charCodeAt(0).toString()
+      return "\\" + ("000" + decimal).slice(-3)
+    })
+    var expr = 'hl.dsp.focus({ workspace = "' + escaped + '" })'
     Util.execDetached('hyprctl dispatch ' + Util.shellQuote(expr))
   }
 

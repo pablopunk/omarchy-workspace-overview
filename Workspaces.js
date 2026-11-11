@@ -36,10 +36,11 @@ function windowGeometry(toplevel, monitor) {
   }
 
   // Window coordinates are absolute in Hyprland's layout space; the card
-  // renders them relative to the workspace monitor's origin.
+  // renders them relative to the workspace monitor's origin. Positions are
+  // clamped so one stale IPC rect cannot blow up the card's content bounds.
   var ox = monitor ? (Number(monitor.x) || 0) : 0
   var oy = monitor ? (Number(monitor.y) || 0) : 0
-  return { x: at[0] - ox, y: at[1] - oy, w: clamp(size[0], 1, 100000), h: clamp(size[1], 1, 100000), known: known }
+  return { x: clamp(at[0] - ox, -100000, 100000), y: clamp(at[1] - oy, -100000, 100000), w: clamp(size[0], 1, 100000), h: clamp(size[1], 1, 100000), known: known }
 }
 
 function titleOf(toplevel) {
@@ -83,6 +84,7 @@ function buildWorkspaces() {
       windows.push({
         title: titleOf(tl),
         appId: appIdOf(wayland),
+        address: tl && typeof tl.address === "string" ? boundedString(tl.address, 32) : "",
         wayland: wayland,
         x: g.x, y: g.y, w: g.w, h: g.h,
         noGeo: !g.known,
@@ -100,6 +102,19 @@ function buildWorkspaces() {
 
     if (windows.length === 0) continue
 
+    // Content bounds: the monitor viewport plus every placed window, so the
+    // card fits columns scrolled out of view instead of clipping them.
+    // Unknown geometry never made it on screen; leave it out of the bounds.
+    var cx0 = 0, cy0 = 0, cx1 = mw, cy1 = mh
+    for (var k = 0; k < windows.length; k++) {
+      var rk = windows[k]
+      if (rk.noGeo) continue
+      if (rk.x < cx0) cx0 = rk.x
+      if (rk.y < cy0) cy0 = rk.y
+      if (rk.x + rk.w > cx1) cx1 = rk.x + rk.w
+      if (rk.y + rk.h > cy1) cy1 = rk.y + rk.h
+    }
+
     out.push({
       id: id,
       name: name,
@@ -110,6 +125,10 @@ function buildWorkspaces() {
       hasFullscreen: ws.hasFullscreen === true,
       monitorWidth: mw,
       monitorHeight: mh,
+      contentX: cx0,
+      contentY: cy0,
+      contentW: Math.max(1, cx1 - cx0),
+      contentH: Math.max(1, cy1 - cy0),
       windows: windows,
       windowCount: windows.length
     })
